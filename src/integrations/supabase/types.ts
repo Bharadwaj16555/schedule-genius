@@ -195,6 +195,7 @@ export type Database = {
         Args: { p_course_id: string; p_student_id: string }
         Returns: boolean
       }
+      get_user_role_secure: { Args: { user_id: string }; Returns: string }
     }
     Enums: {
       user_role: "student" | "faculty" | "admin"
