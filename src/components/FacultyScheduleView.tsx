@@ -15,6 +15,7 @@ interface Course {
   practical_hours: number;
   self_study_hours: number;
   room_number: string;
+  isTeaching?: boolean;
 }
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -31,17 +32,34 @@ const FacultyScheduleView = ({ userId }: { userId: string }) => {
   }, [userId]);
 
   const fetchCourses = async () => {
-    const { data, error } = await supabase
+    // Fetch teaching courses
+    const { data: teachingCourses, error: teachingError } = await supabase
       .from('courses')
       .select('*')
       .eq('instructor_id', userId);
 
-    if (error) {
-      console.error('Error fetching courses:', error);
+    if (teachingError) {
+      console.error('Error fetching teaching courses:', teachingError);
       return;
     }
 
-    setCourses(data || []);
+    // Fetch enrolled courses
+    const { data: enrollments, error: enrollmentError } = await supabase
+      .from('enrollments')
+      .select('*, courses(*)')
+      .eq('student_id', userId)
+      .eq('status', 'enrolled');
+
+    if (enrollmentError) {
+      console.error('Error fetching enrolled courses:', enrollmentError);
+      return;
+    }
+
+    // Combine courses with teaching flag
+    const teaching = (teachingCourses || []).map(c => ({ ...c, isTeaching: true }));
+    const enrolled = (enrollments || []).map(e => ({ ...e.courses, isTeaching: false }));
+    
+    setCourses([...teaching, ...enrolled]);
   };
 
   const formatTime = (time: string) => {
@@ -69,9 +87,9 @@ const FacultyScheduleView = ({ userId }: { userId: string }) => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-2">My Teaching Schedule</h2>
+        <h2 className="text-2xl font-bold mb-2">My Schedule</h2>
         <p className="text-muted-foreground">
-          Your weekly class timetable
+          Your weekly timetable including teaching and enrolled courses
         </p>
       </div>
 
@@ -105,14 +123,23 @@ const FacultyScheduleView = ({ userId }: { userId: string }) => {
                         className="p-2 border-l min-h-[80px]"
                       >
                         {course && (
-                          <div className="h-full bg-primary/10 border border-primary/20 rounded-lg p-3">
-                            <div className="font-semibold text-sm">{course.code}</div>
+                          <div className={`h-full border rounded-lg p-3 ${
+                            course.isTeaching 
+                              ? 'bg-primary/10 border-primary/20' 
+                              : 'bg-secondary/10 border-secondary/20'
+                          }`}>
+                            <div className="flex items-center gap-2">
+                              <div className="font-semibold text-sm">{course.code}</div>
+                              {!course.isTeaching && (
+                                <span className="text-xs px-1.5 py-0.5 bg-secondary/30 rounded">Enrolled</span>
+                              )}
+                            </div>
                             <div className="text-xs text-muted-foreground line-clamp-2 mt-1">
                               {course.name}
                             </div>
                             <div className="text-xs mt-2 space-y-1">
                               <div>{formatTime(course.start_time)} - {formatTime(course.end_time)}</div>
-                              <div className="font-medium text-primary">
+                              <div className={`font-medium ${course.isTeaching ? 'text-primary' : 'text-secondary'}`}>
                                 L-T-P-S: {course.lecture_hours}-{course.tutorial_hours}-{course.practical_hours}-{course.self_study_hours}
                               </div>
                               {course.room_number && (
