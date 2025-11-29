@@ -8,9 +8,14 @@ interface Course {
   code: string;
   name: string;
   credits: number;
+  lecture_hours: number;
+  tutorial_hours: number;
+  practical_hours: number;
+  self_study_hours: number;
   days: string[];
   start_time: string;
   end_time: string;
+  room_number: string;
 }
 
 interface Enrollment {
@@ -114,8 +119,14 @@ const ScheduleView = ({ userId }: { userId: string }) => {
                             <div className="text-xs text-muted-foreground line-clamp-2 mt-1">
                               {course.name}
                             </div>
-                            <div className="text-xs mt-2">
-                              {formatTime(course.start_time)} - {formatTime(course.end_time)}
+                            <div className="text-xs mt-2 space-y-1">
+                              <div>{formatTime(course.start_time)} - {formatTime(course.end_time)}</div>
+                              <div className="font-medium text-primary">
+                                L-T-P-S: {course.lecture_hours}-{course.tutorial_hours}-{course.practical_hours}-{course.self_study_hours}
+                              </div>
+                              {course.room_number && (
+                                <div className="text-muted-foreground">Room {course.room_number}</div>
+                              )}
                             </div>
                           </div>
                         )}
@@ -147,8 +158,11 @@ const ScheduleView = ({ userId }: { userId: string }) => {
                     {enrollment.courses.name}
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <Badge variant="secondary">{enrollment.courses.credits} Credits</Badge>
+                  <Badge variant="outline">
+                    L-T-P-S: {enrollment.courses.lecture_hours}-{enrollment.courses.tutorial_hours}-{enrollment.courses.practical_hours}-{enrollment.courses.self_study_hours}
+                  </Badge>
                   <div className="text-sm text-muted-foreground">
                     {enrollment.courses.days.join(', ')}
                   </div>
