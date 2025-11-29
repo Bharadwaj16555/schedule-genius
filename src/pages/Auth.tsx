@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ReCAPTCHA from "react-google-recaptcha";
 import { z } from "zod";
 import { Shield } from "lucide-react";
+import NumericCaptcha from "@/components/NumericCaptcha";
 
 // Comprehensive email validation schema
 const emailSchema = z.string()
@@ -52,16 +52,12 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [nameError, setNameError] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
-  
-  // Test reCAPTCHA site key (replace with your own in production)
-  const RECAPTCHA_SITE_KEY = "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
 
   useEffect(() => {
     // Check if user is already logged in
@@ -137,10 +133,10 @@ const Auth = () => {
     }
 
     // Check CAPTCHA
-    if (!captchaToken) {
+    if (!captchaVerified) {
       toast({
         title: "Verification required",
-        description: "Please complete the CAPTCHA verification",
+        description: "Please complete the security verification",
         variant: "destructive",
       });
       return;
@@ -169,8 +165,7 @@ const Auth = () => {
       });
       
       // Reset CAPTCHA
-      recaptchaRef.current?.reset();
-      setCaptchaToken(null);
+      setCaptchaVerified(false);
     } catch (error: any) {
       toast({
         title: "Sign up failed",
@@ -178,8 +173,7 @@ const Auth = () => {
         variant: "destructive",
       });
       // Reset CAPTCHA on error
-      recaptchaRef.current?.reset();
-      setCaptchaToken(null);
+      setCaptchaVerified(false);
     } finally {
       setIsLoading(false);
     }
@@ -201,10 +195,10 @@ const Auth = () => {
     }
 
     // Check CAPTCHA
-    if (!captchaToken) {
+    if (!captchaVerified) {
       toast({
         title: "Verification required",
-        description: "Please complete the CAPTCHA verification",
+        description: "Please complete the security verification",
         variant: "destructive",
       });
       return;
@@ -226,8 +220,7 @@ const Auth = () => {
         variant: "destructive",
       });
       // Reset CAPTCHA on error
-      recaptchaRef.current?.reset();
-      setCaptchaToken(null);
+      setCaptchaVerified(false);
     } finally {
       setIsLoading(false);
     }
@@ -241,12 +234,11 @@ const Auth = () => {
     setEmailError("");
     setPasswordError("");
     setNameError("");
-    setCaptchaToken(null);
-    recaptchaRef.current?.reset();
+    setCaptchaVerified(false);
   };
 
-  const handleCaptchaChange = (token: string | null) => {
-    setCaptchaToken(token);
+  const handleCaptchaVerify = (isValid: boolean) => {
+    setCaptchaVerified(isValid);
   };
 
   return (
@@ -318,24 +310,12 @@ const Auth = () => {
                 </div>
                 
                 {/* CAPTCHA */}
-                <div className="flex justify-center py-2">
-                  <ReCAPTCHA
-                    ref={recaptchaRef}
-                    sitekey={RECAPTCHA_SITE_KEY}
-                    onChange={handleCaptchaChange}
-                    theme="light"
-                  />
-                </div>
-                
-                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                  <Shield className="w-4 h-4" />
-                  <span>Protected by reCAPTCHA for security</span>
-                </div>
+                <NumericCaptcha onVerify={handleCaptchaVerify} />
 
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isLoading || !captchaToken}
+                  disabled={isLoading || !captchaVerified}
                 >
                   {isLoading ? "Signing in..." : "Sign In"}
                 </Button>
@@ -406,24 +386,12 @@ const Auth = () => {
                 </div>
                 
                 {/* CAPTCHA */}
-                <div className="flex justify-center py-2">
-                  <ReCAPTCHA
-                    ref={recaptchaRef}
-                    sitekey={RECAPTCHA_SITE_KEY}
-                    onChange={handleCaptchaChange}
-                    theme="light"
-                  />
-                </div>
-                
-                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                  <Shield className="w-4 h-4" />
-                  <span>Protected by reCAPTCHA for security</span>
-                </div>
+                <NumericCaptcha onVerify={handleCaptchaVerify} />
 
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isLoading || !captchaToken}
+                  disabled={isLoading || !captchaVerified}
                 >
                   {isLoading ? "Creating account..." : "Create Account"}
                 </Button>
