@@ -3,8 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, BookOpen, Clock } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LogOut, BookOpen, Clock, Users, AlertCircle, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import FacultyScheduleView from "@/components/FacultyScheduleView";
+import CourseRegistrationsView from "@/components/CourseRegistrationsView";
+import ConflictManagementView from "@/components/ConflictManagementView";
 
 interface Course {
   id: string;
@@ -127,61 +131,94 @@ const FacultyDashboard = () => {
       </header>
 
       <main className="container mx-auto px-6 py-8">
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-3xl font-bold mb-2">My Courses</h2>
-            <p className="text-muted-foreground">
-              You are teaching {courses.length} course{courses.length !== 1 ? 's' : ''} this semester
-              {courses.length >= 2 && ' (Maximum limit reached)'}
-            </p>
-          </div>
+        <Tabs defaultValue="courses" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 max-w-[600px]">
+            <TabsTrigger value="courses" className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              My Courses
+            </TabsTrigger>
+            <TabsTrigger value="registrations" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Registrations
+            </TabsTrigger>
+            <TabsTrigger value="schedule" className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Schedule
+            </TabsTrigger>
+            <TabsTrigger value="conflicts" className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              Conflicts
+            </TabsTrigger>
+          </TabsList>
 
-          {courses.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <BookOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-lg text-muted-foreground">No courses assigned yet</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid md:grid-cols-2 gap-6">
-              {courses.map((course) => (
-                <Card key={course.id} className="card-hover">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-xl mb-1">{course.code}</CardTitle>
-                        <CardDescription className="text-base font-medium text-foreground">
-                          {course.name}
-                        </CardDescription>
-                      </div>
-                      <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                        {course.credits} Credits
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {course.description && (
-                      <p className="text-sm text-muted-foreground">{course.description}</p>
-                    )}
-                    
-                    <div className="space-y-2 pt-2 border-t">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium">
-                          {course.days.join(', ')}
-                        </span>
-                      </div>
-                      <div className="text-sm text-muted-foreground ml-6">
-                        {formatTime(course.start_time)} - {formatTime(course.end_time)}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+          <TabsContent value="courses" className="space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">My Courses</h2>
+              <p className="text-muted-foreground">
+                You are teaching {courses.length} course{courses.length !== 1 ? 's' : ''} this semester
+                {courses.length >= 2 && ' (Maximum limit reached)'}
+              </p>
             </div>
-          )}
-        </div>
+
+            {courses.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <BookOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-lg text-muted-foreground">No courses assigned yet</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-6">
+                {courses.map((course) => (
+                  <Card key={course.id} className="card-hover">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-xl mb-1">{course.code}</CardTitle>
+                          <CardDescription className="text-base font-medium text-foreground">
+                            {course.name}
+                          </CardDescription>
+                        </div>
+                        <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                          {course.credits} Credits
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {course.description && (
+                        <p className="text-sm text-muted-foreground">{course.description}</p>
+                      )}
+                      
+                      <div className="space-y-2 pt-2 border-t">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium">
+                            {course.days.join(', ')}
+                          </span>
+                        </div>
+                        <div className="text-sm text-muted-foreground ml-6">
+                          {formatTime(course.start_time)} - {formatTime(course.end_time)}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="registrations">
+            <CourseRegistrationsView userId={user.id} />
+          </TabsContent>
+
+          <TabsContent value="schedule">
+            <FacultyScheduleView userId={user.id} />
+          </TabsContent>
+
+          <TabsContent value="conflicts">
+            <ConflictManagementView userId={user.id} />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
