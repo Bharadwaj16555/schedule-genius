@@ -99,13 +99,20 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-3xl">
+    <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Decorative background */}
+      <div className="absolute top-20 right-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl"></div>
+      <div className="absolute bottom-20 left-20 w-72 h-72 bg-accent/10 rounded-full blur-3xl"></div>
+      
+      <Card className="w-full max-w-md card-hover relative z-10">
+        <CardHeader className="space-y-4">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold gradient-text mb-2">EduManage</h1>
+          </div>
+          <CardTitle className="text-3xl text-center">
             {role === 'faculty' ? 'Faculty' : 'Student'} Portal
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-center">
             Sign in or create an account to continue
           </CardDescription>
         </CardHeader>
