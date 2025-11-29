@@ -21,11 +21,16 @@ interface Course {
   name: string;
   description: string;
   credits: number;
+  lecture_hours: number;
+  tutorial_hours: number;
+  practical_hours: number;
+  self_study_hours: number;
   max_students: number;
   days: string[];
   start_time: string;
   end_time: string;
   semester: string;
+  room_number: string;
   instructor_id: string | null;
 }
 
@@ -224,12 +229,16 @@ const DashboardView = ({ userId }: { userId: string }) => {
                       {course.description && (
                         <p className="text-sm text-muted-foreground">{course.description}</p>
                       )}
-                      <div className="flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-4 text-sm flex-wrap">
                         <Badge variant="secondary">{course.credits} Credits</Badge>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          {course.days.join(', ')} • {formatTime(course.start_time)} - {formatTime(course.end_time)}
-                        </div>
+                        <Badge variant="outline">
+                          L-T-P-S: {course.lecture_hours}-{course.tutorial_hours}-{course.practical_hours}-{course.self_study_hours}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-1 text-sm">
+                        <Clock className="w-4 h-4" />
+                        {course.days.join(', ')} • {formatTime(course.start_time)} - {formatTime(course.end_time)}
+                        {course.room_number && ` • Room ${course.room_number}`}
                       </div>
                     </CardContent>
                   </Card>
@@ -285,12 +294,16 @@ const DashboardView = ({ userId }: { userId: string }) => {
                           {course.description && (
                             <p className="text-sm text-muted-foreground">{course.description}</p>
                           )}
-                          <div className="flex items-center gap-4 text-sm">
+                          <div className="flex items-center gap-4 text-sm flex-wrap">
                             <Badge variant="secondary">{course.credits} Credits</Badge>
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              {course.days.join(', ')} • {formatTime(course.start_time)} - {formatTime(course.end_time)}
-                            </div>
+                            <Badge variant="outline">
+                              L-T-P-S: {course.lecture_hours}-{course.tutorial_hours}-{course.practical_hours}-{course.self_study_hours}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-1 text-sm">
+                            <Clock className="w-4 h-4" />
+                            {course.days.join(', ')} • {formatTime(course.start_time)} - {formatTime(course.end_time)}
+                            {course.room_number && ` • Room ${course.room_number}`}
                           </div>
                         </CardContent>
                       </Card>
@@ -327,16 +340,20 @@ const DashboardView = ({ userId }: { userId: string }) => {
                       {enrollment.courses.description}
                     </p>
                   )}
-                  <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-4 text-sm flex-wrap">
                     <Badge variant="secondary">{enrollment.courses.credits} Credits</Badge>
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {enrollment.courses.days.join(', ')}
-                    </div>
+                    <Badge variant="outline">
+                      L-T-P-S: {enrollment.courses.lecture_hours}-{enrollment.courses.tutorial_hours}-{enrollment.courses.practical_hours}-{enrollment.courses.self_study_hours}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm">
+                    <Clock className="w-4 h-4" />
+                    {enrollment.courses.days.join(', ')}
                   </div>
                   <div className="text-sm text-muted-foreground ml-6">
                     {formatTime(enrollment.courses.start_time)} -{' '}
                     {formatTime(enrollment.courses.end_time)}
+                    {enrollment.courses.room_number && ` • Room ${enrollment.courses.room_number}`}
                   </div>
                 </CardContent>
               </Card>

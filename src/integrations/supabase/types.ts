@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      course_logs: {
+        Row: {
+          action_type: string
+          course_id: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          action_type: string
+          course_id: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          action_type?: string
+          course_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_logs_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           code: string
@@ -24,10 +62,16 @@ export type Database = {
           end_time: string
           id: string
           instructor_id: string | null
+          lecture_hours: number
           max_students: number
           name: string
+          practical_hours: number
+          room_number: string | null
+          self_study_hours: number
           semester: string
           start_time: string
+          status: string
+          tutorial_hours: number
         }
         Insert: {
           code: string
@@ -38,10 +82,16 @@ export type Database = {
           end_time: string
           id?: string
           instructor_id?: string | null
+          lecture_hours?: number
           max_students?: number
           name: string
+          practical_hours?: number
+          room_number?: string | null
+          self_study_hours?: number
           semester: string
           start_time: string
+          status?: string
+          tutorial_hours?: number
         }
         Update: {
           code?: string
@@ -52,10 +102,16 @@ export type Database = {
           end_time?: string
           id?: string
           instructor_id?: string | null
+          lecture_hours?: number
           max_students?: number
           name?: string
+          practical_hours?: number
+          room_number?: string | null
+          self_study_hours?: number
           semester?: string
           start_time?: string
+          status?: string
+          tutorial_hours?: number
         }
         Relationships: [
           {

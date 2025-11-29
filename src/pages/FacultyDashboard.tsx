@@ -9,6 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import FacultyScheduleView from "@/components/FacultyScheduleView";
 import CourseRegistrationsView from "@/components/CourseRegistrationsView";
 import ConflictManagementView from "@/components/ConflictManagementView";
+import CourseCreateForm from "@/components/CourseCreateForm";
+import CourseLogsView from "@/components/CourseLogsView";
+import AllCoursesView from "@/components/AllCoursesView";
 
 interface Course {
   id: string;
@@ -16,10 +19,15 @@ interface Course {
   name: string;
   description: string;
   credits: number;
+  lecture_hours: number;
+  tutorial_hours: number;
+  practical_hours: number;
+  self_study_hours: number;
   days: string[];
   start_time: string;
   end_time: string;
   semester: string;
+  room_number: string;
 }
 
 const FacultyDashboard = () => {
@@ -131,11 +139,15 @@ const FacultyDashboard = () => {
       </header>
 
       <main className="container mx-auto px-6 py-8">
-        <Tabs defaultValue="courses" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 max-w-[600px]">
-            <TabsTrigger value="courses" className="flex items-center gap-2">
+        <Tabs defaultValue="my-courses" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6 max-w-[900px]">
+            <TabsTrigger value="my-courses" className="flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
               My Courses
+            </TabsTrigger>
+            <TabsTrigger value="all-courses" className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              All Courses
             </TabsTrigger>
             <TabsTrigger value="registrations" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
@@ -149,16 +161,21 @@ const FacultyDashboard = () => {
               <AlertCircle className="w-4 h-4" />
               Conflicts
             </TabsTrigger>
+            <TabsTrigger value="logs" className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Logs
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="courses" className="space-y-6">
+          <TabsContent value="my-courses" className="space-y-6">
             <div>
               <h2 className="text-3xl font-bold mb-2">My Courses</h2>
               <p className="text-muted-foreground">
                 You are teaching {courses.length} course{courses.length !== 1 ? 's' : ''} this semester
-                {courses.length >= 2 && ' (Maximum limit reached)'}
               </p>
             </div>
+
+            <CourseCreateForm userId={user.id} onCourseCreated={() => fetchCourses(user.id)} />
 
             {courses.length === 0 ? (
               <Card>
@@ -189,7 +206,7 @@ const FacultyDashboard = () => {
                         <p className="text-sm text-muted-foreground">{course.description}</p>
                       )}
                       
-                      <div className="space-y-2 pt-2 border-t">
+                      <div className="space-y-3 pt-2 border-t">
                         <div className="flex items-center gap-2 text-sm">
                           <Clock className="w-4 h-4 text-muted-foreground" />
                           <span className="font-medium">
@@ -198,6 +215,13 @@ const FacultyDashboard = () => {
                         </div>
                         <div className="text-sm text-muted-foreground ml-6">
                           {formatTime(course.start_time)} - {formatTime(course.end_time)}
+                          {course.room_number && ` • Room ${course.room_number}`}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <BookOpen className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium">
+                            L-T-P-S: {course.lecture_hours}-{course.tutorial_hours}-{course.practical_hours}-{course.self_study_hours}
+                          </span>
                         </div>
                       </div>
                     </CardContent>
@@ -205,6 +229,10 @@ const FacultyDashboard = () => {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="all-courses">
+            <AllCoursesView userId={user.id} />
           </TabsContent>
 
           <TabsContent value="registrations">
@@ -217,6 +245,10 @@ const FacultyDashboard = () => {
 
           <TabsContent value="conflicts">
             <ConflictManagementView userId={user.id} />
+          </TabsContent>
+
+          <TabsContent value="logs">
+            <CourseLogsView userId={user.id} />
           </TabsContent>
         </Tabs>
       </main>

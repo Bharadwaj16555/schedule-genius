@@ -124,7 +124,7 @@ const ConflictManagementView = ({ userId }: { userId: string }) => {
     setLoading(false);
   };
 
-  const handleDropEnrollment = async (enrollmentId: string, studentName: string, courseName: string) => {
+  const handleDropEnrollment = async (enrollmentId: string, studentName: string, courseName: string, courseId: string) => {
     const { error } = await supabase
       .from('enrollments')
       .update({ status: 'dropped' })
@@ -138,6 +138,17 @@ const ConflictManagementView = ({ userId }: { userId: string }) => {
       });
       return;
     }
+
+    // Log the conflict resolution
+    await supabase
+      .from('course_logs')
+      .insert({
+        course_id: courseId,
+        action_type: 'conflict_resolution',
+        description: `Schedule conflict resolved: ${studentName} was dropped from ${courseName}`,
+        created_by: userId,
+        metadata: { enrollment_id: enrollmentId, student_name: studentName }
+      });
 
     toast({
       title: "Enrollment Dropped",
@@ -232,7 +243,8 @@ const ConflictManagementView = ({ userId }: { userId: string }) => {
                     onClick={() => handleDropEnrollment(
                       conflict.enrollment.id,
                       conflict.enrollment.profiles.full_name,
-                      conflict.enrollment.courses.code
+                      conflict.enrollment.courses.code,
+                      conflict.enrollment.course_id
                     )}
                   >
                     Drop Student from Your Course

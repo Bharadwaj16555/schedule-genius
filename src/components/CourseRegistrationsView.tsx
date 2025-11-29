@@ -23,6 +23,10 @@ interface Course {
   code: string;
   name: string;
   max_students: number;
+  lecture_hours: number;
+  tutorial_hours: number;
+  practical_hours: number;
+  self_study_hours: number;
 }
 
 interface CourseWithEnrollments extends Course {
@@ -85,9 +89,12 @@ const CourseRegistrationsView = ({ userId }: { userId: string }) => {
             <Card key={course.id}>
               <CardHeader>
                 <div className="flex items-start justify-between">
-                  <div>
+                  <div className="flex-1">
                     <CardTitle className="text-xl">{course.code}</CardTitle>
                     <CardDescription className="text-base">{course.name}</CardDescription>
+                    <div className="text-sm text-muted-foreground mt-2">
+                      L-T-P-S: {course.lecture_hours}-{course.tutorial_hours}-{course.practical_hours}-{course.self_study_hours}
+                    </div>
                   </div>
                   <Badge variant={enrolledCount >= course.max_students ? "destructive" : "secondary"}>
                     <Users className="w-3 h-3 mr-1" />
