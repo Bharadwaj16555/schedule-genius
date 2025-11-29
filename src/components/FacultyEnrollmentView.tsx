@@ -70,7 +70,6 @@ const FacultyEnrollmentView = ({ userId }: { userId: string }) => {
     const { data, error } = await supabase
       .from('courses')
       .select('*')
-      .neq('instructor_id', userId)
       .order('code');
 
     if (error) {
@@ -141,12 +140,15 @@ const FacultyEnrollmentView = ({ userId }: { userId: string }) => {
   };
 
   const enrolledCourseIds = enrolledCourses.map(e => e.course_id);
-  const filteredCourses = availableCourses.filter(
-    course => 
-      !enrolledCourseIds.includes(course.id) &&
-      (course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-       course.name.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredCourses = availableCourses.filter(course => {
+    const isNotEnrolled = !enrolledCourseIds.includes(course.id);
+    const isNotInstructor = course.instructor_id !== userId;
+    const matchesSearch = searchQuery === '' || 
+      course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.name.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return isNotEnrolled && isNotInstructor && matchesSearch;
+  });
 
   return (
     <div className="space-y-6">
