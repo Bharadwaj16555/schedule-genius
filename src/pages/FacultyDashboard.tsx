@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, BookOpen, Clock, Users, AlertCircle, Calendar } from "lucide-react";
+import { LogOut, BookOpen, Clock, Users, AlertCircle, Calendar, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import FacultyScheduleView from "@/components/FacultyScheduleView";
 import CourseRegistrationsView from "@/components/CourseRegistrationsView";
@@ -12,6 +12,7 @@ import ConflictManagementView from "@/components/ConflictManagementView";
 import CourseCreateForm from "@/components/CourseCreateForm";
 import CourseLogsView from "@/components/CourseLogsView";
 import AllCoursesView from "@/components/AllCoursesView";
+import FacultyEnrollmentView from "@/components/FacultyEnrollmentView";
 
 interface Course {
   id: string;
@@ -147,7 +148,7 @@ const FacultyDashboard = () => {
 
       <main className="container mx-auto px-6 py-8">
         <Tabs defaultValue="my-courses" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 max-w-[900px]">
+          <TabsList className="grid w-full grid-cols-7 max-w-[1050px]">
             <TabsTrigger value="my-courses" className="flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
               My Courses
@@ -155,6 +156,10 @@ const FacultyDashboard = () => {
             <TabsTrigger value="all-courses" className="flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
               All Courses
+            </TabsTrigger>
+            <TabsTrigger value="register" className="flex items-center gap-2">
+              <UserPlus className="w-4 h-4" />
+              Register
             </TabsTrigger>
             <TabsTrigger value="registrations" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
@@ -240,6 +245,10 @@ const FacultyDashboard = () => {
 
           <TabsContent value="all-courses">
             <AllCoursesView userId={user.id} />
+          </TabsContent>
+
+          <TabsContent value="register">
+            <FacultyEnrollmentView userId={user.id} />
           </TabsContent>
 
           <TabsContent value="registrations">
