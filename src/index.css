@@ -8,41 +8,43 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 355 25% 95%;
-    --foreground: 355 15% 15%;
+    --background: 340 100% 97%;
+    --foreground: 340 30% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 355 15% 15%;
+    --card-foreground: 340 30% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 355 15% 15%;
+    --popover-foreground: 340 30% 20%;
 
-    --primary: 355 45% 65%;
+    --primary: 340 82% 67%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 355 35% 85%;
-    --secondary-foreground: 355 15% 25%;
+    --secondary: 340 60% 90%;
+    --secondary-foreground: 340 40% 30%;
 
-    --muted: 355 20% 92%;
-    --muted-foreground: 355 10% 45%;
+    --muted: 340 40% 94%;
+    --muted-foreground: 340 20% 50%;
 
-    --accent: 355 50% 75%;
-    --accent-foreground: 355 15% 15%;
+    --accent: 280 65% 75%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 355 20% 88%;
-    --input: 355 20% 88%;
-    --ring: 355 45% 65%;
+    --border: 340 30% 90%;
+    --input: 340 30% 92%;
+    --ring: 340 82% 67%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
     
-    /* Custom tokens for ScheduleCo */
-    --hero-gradient: linear-gradient(135deg, hsl(355 45% 65%), hsl(355 55% 75%));
-    --card-shadow: 0 4px 20px -5px hsl(355 45% 65% / 0.15);
-    --hover-lift: translateY(-2px);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Custom tokens for EduManage */
+    --hero-gradient: linear-gradient(135deg, hsl(340 82% 67%), hsl(280 65% 75%));
+    --card-gradient: linear-gradient(145deg, hsl(0 0% 100%), hsl(340 60% 98%));
+    --card-shadow: 0 8px 32px -8px hsl(340 82% 67% / 0.2);
+    --hover-lift: translateY(-4px);
+    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --glow-pink: 0 0 40px hsl(340 82% 67% / 0.3);
 
     --sidebar-background: 0 0% 98%;
 
@@ -62,33 +64,33 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 355 15% 12%;
-    --foreground: 355 15% 95%;
+    --background: 340 40% 10%;
+    --foreground: 340 20% 95%;
 
-    --card: 355 15% 15%;
-    --card-foreground: 355 15% 95%;
+    --card: 340 35% 13%;
+    --card-foreground: 340 20% 95%;
 
-    --popover: 355 15% 15%;
-    --popover-foreground: 355 15% 95%;
+    --popover: 340 35% 13%;
+    --popover-foreground: 340 20% 95%;
 
-    --primary: 355 50% 70%;
-    --primary-foreground: 355 15% 12%;
+    --primary: 340 82% 65%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 355 15% 20%;
-    --secondary-foreground: 355 15% 95%;
+    --secondary: 340 30% 18%;
+    --secondary-foreground: 340 20% 95%;
 
-    --muted: 355 15% 20%;
-    --muted-foreground: 355 10% 65%;
+    --muted: 340 30% 18%;
+    --muted-foreground: 340 20% 65%;
 
-    --accent: 355 50% 60%;
-    --accent-foreground: 355 15% 95%;
+    --accent: 280 65% 70%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 50.6%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 355 15% 25%;
-    --input: 355 15% 25%;
-    --ring: 355 50% 70%;
+    --border: 340 30% 22%;
+    --input: 340 30% 22%;
+    --ring: 340 82% 65%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -107,12 +109,13 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', 'Inter', sans-serif;
-    font-weight: 600;
+    font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -120,10 +123,18 @@ All colors MUST be HSL.
   .card-hover {
     transition: var(--transition-smooth);
     box-shadow: var(--card-shadow);
+    background: var(--card-gradient);
   }
   
   .card-hover:hover {
     transform: var(--hover-lift);
-    box-shadow: 0 8px 30px -5px hsl(355 45% 65% / 0.25);
+    box-shadow: 0 12px 48px -12px hsl(340 82% 67% / 0.35), var(--glow-pink);
+  }
+  
+  .gradient-text {
+    background: var(--hero-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 }
