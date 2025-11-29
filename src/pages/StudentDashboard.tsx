@@ -46,6 +46,13 @@ const StudentDashboard = () => {
 
     if (error) {
       console.error('Error fetching profile:', error);
+      toast({
+        title: "Error loading profile",
+        description: "Please sign out and try again",
+        variant: "destructive",
+      });
+      await supabase.auth.signOut();
+      navigate('/');
       return;
     }
 
