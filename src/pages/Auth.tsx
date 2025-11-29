@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,43 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ReCAPTCHA from "react-google-recaptcha";
+import { z } from "zod";
+import { Shield } from "lucide-react";
+
+// Comprehensive email validation schema
+const emailSchema = z.string()
+  .trim()
+  .min(5, { message: "Email must be at least 5 characters" })
+  .max(255, { message: "Email must be less than 255 characters" })
+  .email({ message: "Please enter a valid email address" })
+  .refine((email) => {
+    // Check for valid email format with proper domain
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  }, { message: "Invalid email format" })
+  .refine((email) => {
+    // Ensure no consecutive dots
+    return !email.includes('..');
+  }, { message: "Email cannot contain consecutive dots" })
+  .refine((email) => {
+    // Check for valid domain (supports gmail, outlook, yahoo, etc.)
+    const domain = email.split('@')[1];
+    return domain && domain.length >= 3 && domain.includes('.');
+  }, { message: "Please enter a valid email domain" });
+
+const passwordSchema = z.string()
+  .min(6, { message: "Password must be at least 6 characters" })
+  .max(100, { message: "Password must be less than 100 characters" });
+
+const nameSchema = z.string()
+  .trim()
+  .min(2, { message: "Name must be at least 2 characters" })
+  .max(100, { message: "Name must be less than 100 characters" })
+  .refine((name) => {
+    // Only allow letters, spaces, hyphens, and apostrophes
+    return /^[a-zA-Z\s'-]+$/.test(name);
+  }, { message: "Name can only contain letters, spaces, hyphens, and apostrophes" });
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -15,8 +52,16 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [nameError, setNameError] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
+  
+  // Test reCAPTCHA site key (replace with your own in production)
+  const RECAPTCHA_SITE_KEY = "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
 
   useEffect(() => {
     // Check if user is already logged in
@@ -35,17 +80,81 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate, role]);
 
+  const validateEmail = (email: string): boolean => {
+    try {
+      emailSchema.parse(email);
+      setEmailError("");
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        setEmailError(error.errors[0].message);
+      }
+      return false;
+    }
+  };
+
+  const validatePassword = (password: string): boolean => {
+    try {
+      passwordSchema.parse(password);
+      setPasswordError("");
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        setPasswordError(error.errors[0].message);
+      }
+      return false;
+    }
+  };
+
+  const validateName = (name: string): boolean => {
+    try {
+      nameSchema.parse(name);
+      setNameError("");
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        setNameError(error.errors[0].message);
+      }
+      return false;
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous errors
+    setEmailError("");
+    setPasswordError("");
+    setNameError("");
+
+    // Validate all fields
+    const isEmailValid = validateEmail(email);
+    const isPasswordValid = validatePassword(password);
+    const isNameValid = validateName(fullName);
+    
+    if (!isEmailValid || !isPasswordValid || !isNameValid) {
+      return;
+    }
+
+    // Check CAPTCHA
+    if (!captchaToken) {
+      toast({
+        title: "Verification required",
+        description: "Please complete the CAPTCHA verification",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const { error } = await supabase.auth.signUp({
-        email,
+        email: email.trim().toLowerCase(),
         password,
         options: {
           data: {
-            full_name: fullName,
+            full_name: fullName.trim(),
             role: role,
           },
           emailRedirectTo: `${window.location.origin}/`,
@@ -58,12 +167,19 @@ const Auth = () => {
         title: "Account created!",
         description: "You can now sign in with your credentials.",
       });
+      
+      // Reset CAPTCHA
+      recaptchaRef.current?.reset();
+      setCaptchaToken(null);
     } catch (error: any) {
       toast({
         title: "Sign up failed",
         description: error.message,
         variant: "destructive",
       });
+      // Reset CAPTCHA on error
+      recaptchaRef.current?.reset();
+      setCaptchaToken(null);
     } finally {
       setIsLoading(false);
     }
@@ -71,11 +187,34 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous errors
+    setEmailError("");
+    setPasswordError("");
+
+    // Validate fields
+    const isEmailValid = validateEmail(email);
+    const isPasswordValid = validatePassword(password);
+    
+    if (!isEmailValid || !isPasswordValid) {
+      return;
+    }
+
+    // Check CAPTCHA
+    if (!captchaToken) {
+      toast({
+        title: "Verification required",
+        description: "Please complete the CAPTCHA verification",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim().toLowerCase(),
         password,
       });
 
@@ -86,16 +225,28 @@ const Auth = () => {
         description: error.message,
         variant: "destructive",
       });
+      // Reset CAPTCHA on error
+      recaptchaRef.current?.reset();
+      setCaptchaToken(null);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleTabChange = (value: string) => {
-    // Clear form fields when switching tabs
+    // Clear form fields and errors when switching tabs
     setEmail("");
     setPassword("");
     setFullName("");
+    setEmailError("");
+    setPasswordError("");
+    setNameError("");
+    setCaptchaToken(null);
+    recaptchaRef.current?.reset();
+  };
+
+  const handleCaptchaChange = (token: string | null) => {
+    setCaptchaToken(token);
   };
 
   return (
@@ -126,15 +277,26 @@ const Auth = () => {
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
+                  <Label htmlFor="signin-email">Email Address</Label>
                   <Input
                     id="signin-email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="name@example.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (emailError) setEmailError("");
+                    }}
+                    onBlur={(e) => validateEmail(e.target.value)}
+                    className={emailError ? "border-destructive" : ""}
                     required
                   />
+                  {emailError && (
+                    <p className="text-sm text-destructive">{emailError}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Supports Gmail, Outlook, Yahoo, and other email providers
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signin-password">Password</Label>
@@ -143,11 +305,38 @@ const Auth = () => {
                     type="password"
                     placeholder="Enter your password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (passwordError) setPasswordError("");
+                    }}
+                    className={passwordError ? "border-destructive" : ""}
                     required
                   />
+                  {passwordError && (
+                    <p className="text-sm text-destructive">{passwordError}</p>
+                  )}
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                
+                {/* CAPTCHA */}
+                <div className="flex justify-center py-2">
+                  <ReCAPTCHA
+                    ref={recaptchaRef}
+                    sitekey={RECAPTCHA_SITE_KEY}
+                    onChange={handleCaptchaChange}
+                    theme="light"
+                  />
+                </div>
+                
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                  <Shield className="w-4 h-4" />
+                  <span>Protected by reCAPTCHA for security</span>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isLoading || !captchaToken}
+                >
                   {isLoading ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
@@ -160,35 +349,82 @@ const Auth = () => {
                   <Input
                     id="signup-name"
                     type="text"
-                    placeholder="Enter your full name"
+                    placeholder="John Doe"
                     value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
+                    onChange={(e) => {
+                      setFullName(e.target.value);
+                      if (nameError) setNameError("");
+                    }}
+                    onBlur={(e) => validateName(e.target.value)}
+                    className={nameError ? "border-destructive" : ""}
                     required
                   />
+                  {nameError && (
+                    <p className="text-sm text-destructive">{nameError}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email">Email Address</Label>
                   <Input
                     id="signup-email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="name@example.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (emailError) setEmailError("");
+                    }}
+                    onBlur={(e) => validateEmail(e.target.value)}
+                    className={emailError ? "border-destructive" : ""}
                     required
                   />
+                  {emailError && (
+                    <p className="text-sm text-destructive">{emailError}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Supports Gmail, Outlook, Yahoo, and other email providers
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
                   <Input
                     id="signup-password"
                     type="password"
-                    placeholder="Create a password"
+                    placeholder="Minimum 6 characters"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (passwordError) setPasswordError("");
+                    }}
+                    onBlur={(e) => validatePassword(e.target.value)}
+                    className={passwordError ? "border-destructive" : ""}
                     required
                   />
+                  {passwordError && (
+                    <p className="text-sm text-destructive">{passwordError}</p>
+                  )}
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                
+                {/* CAPTCHA */}
+                <div className="flex justify-center py-2">
+                  <ReCAPTCHA
+                    ref={recaptchaRef}
+                    sitekey={RECAPTCHA_SITE_KEY}
+                    onChange={handleCaptchaChange}
+                    theme="light"
+                  />
+                </div>
+                
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                  <Shield className="w-4 h-4" />
+                  <span>Protected by reCAPTCHA for security</span>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isLoading || !captchaToken}
+                >
                   {isLoading ? "Creating account..." : "Create Account"}
                 </Button>
               </form>
